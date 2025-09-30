@@ -31,6 +31,7 @@ const resultados = []; // { ronda, letra, clicado, tiempo }
 
 // --- Utilidades ---
 const aleatoria = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const aleatorioEntre = (min, max) => Math.random() * (max - min) + min;
 
 function prepararSecuencia() {
   return Array.from({ length: TOTAL_RONDAS }, () => aleatoria(ALFABETO));
@@ -43,8 +44,22 @@ btnComenzar.addEventListener("click", () => {
   secuencia = prepararSecuencia();
   pantallaInicio.classList.add("hidden");
   pantallaResultados.classList.add("hidden");
+  
+  // Mostrar pantalla de juego antes de la cuenta regresiva
   pantallaJuego.classList.remove("hidden");
-  siguienteRonda();
+
+  // Contagem regressiva 3-2-1
+  let contador = 3;
+  letraEl.textContent = contador;
+  const intervalId = setInterval(() => {
+    contador--;
+    if (contador > 0) {
+      letraEl.textContent = contador;
+    } else {
+      clearInterval(intervalId);
+      siguienteRonda(); // Inicia la primera ronda
+    }
+  }, 1000);
 });
 
 // --- Reinicio ---
@@ -123,15 +138,11 @@ function registrarSinClic() {
   avanzarTrasBrevePausa();
 }
 
-// --- Mostrar emoji ---
+// --- Mostrar emoji (sin timeout interno) ---
 function mostrarEmoji(ok) {
   emojiFeedback.textContent = ok ? "✅" : "❌";
   emojiFeedback.classList.add("show");
   emojiFeedback.classList.remove("hidden");
-  setTimeout(() => {
-    emojiFeedback.classList.remove("show");
-    emojiFeedback.classList.add("hidden");
-  }, 1000);
 }
 
 // --- Feedback visual ---
@@ -140,11 +151,21 @@ function flashResultado(ok) {
   zonaClic.classList.add(ok ? "flash-ok" : "flash-err");
 }
 
-// --- Pausa breve ---
+// --- Pausa breve entre rondas (ahora aleatoria 1-2s) ---
 function avanzarTrasBrevePausa() {
+  const pausaAleatoria = aleatorioEntre(1000, 2000); // ms
+
+  // Mantiene emoji y letra juntos durante DURACION_RONDA_MS, luego desaparecen juntos
   setTimeout(() => {
-    siguienteRonda();
-  }, 1000);
+    letraEl.textContent = "";
+    emojiFeedback.classList.remove("show");
+    emojiFeedback.classList.add("hidden");
+
+    // Chama próxima ronda após pausa aleatória
+    setTimeout(() => {
+      siguienteRonda();
+    }, pausaAleatoria);
+  }, DURACION_RONDA_MS);
 }
 
 // --- Finalización ---
