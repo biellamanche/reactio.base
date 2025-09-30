@@ -1,215 +1,133 @@
-// --- Configuración del test ---
-const TOTAL_RONDAS = 20;
-const DURACION_RONDA_MS = 500; // 500 ms por ronda
-const ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
-// --- Elementos del DOM ---
-const pantallaInicio = document.getElementById("pantalla-inicio");
-const pantallaJuego = document.getElementById("pantalla-juego");
-const pantallaResultados = document.getElementById("pantalla-resultados");
-
-const btnComenzar = document.getElementById("btn-comenzar");
-const btnReiniciar = document.getElementById("btn-reiniciar");
-
-const indicadorRonda = document.getElementById("indicador-ronda");
-const cronometro = document.getElementById("cronometro");
-const zonaClic = document.getElementById("zona-clic");
-const letraEl = document.getElementById("letra");
-const barraProgreso = document.getElementById("barra-progreso");
-const emojiFeedback = document.getElementById("emoji-feedback");
-
-const cuerpoTabla = document.getElementById("cuerpo-tabla");
-
-// --- Estado ---
-let ronda = 0;
-let letraActual = "";
-let inicioRonda = 0;
-let clicRegistrado = false;
-let timeoutRonda = null;
-let secuencia = [];
-const resultados = []; // { ronda, letra, clicado, tiempo }
-
-// --- Utilidades ---
-const aleatoria = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const aleatorioEntre = (min, max) => Math.random() * (max - min) + min;
-
-function prepararSecuencia() {
-  return Array.from({ length: TOTAL_RONDAS }, () => aleatoria(ALFABETO));
+:root{
+  --bg:#f4f9ff;
+  --card:#ffffff;
+  --text:#0a2540;
+  --muted:#5b7083;
+  --primary:#2b7cff;
+  --primary-weak:#e5f0ff;
+  --ok:#12b886;
+  --err:#ff6b6b;
+  --shadow:0 10px 30px rgba(16,24,40,0.08);
+  --radius:18px;
 }
 
-// --- Inicio del test ---
-btnComenzar.addEventListener("click", () => {
-  resultados.length = 0;
-  ronda = 0;
-  secuencia = prepararSecuencia();
-  pantallaInicio.classList.add("hidden");
-  pantallaResultados.classList.add("hidden");
-  
-  // Mostrar pantalla de juego antes de la cuenta regresiva
-  pantallaJuego.classList.remove("hidden");
-
-  // Contagem regressiva 3-2-1
-  let contador = 3;
-  letraEl.textContent = contador;
-  const intervalId = setInterval(() => {
-    contador--;
-    if (contador > 0) {
-      letraEl.textContent = contador;
-    } else {
-      clearInterval(intervalId);
-      siguienteRonda(); // Inicia la primera ronda
-    }
-  }, 1000);
-});
-
-// --- Reinicio ---
-btnReiniciar.addEventListener("click", () => {
-  cuerpoTabla.innerHTML = "";
-  pantallaResultados.classList.add("hidden");
-  pantallaInicio.classList.remove("hidden");
-});
-
-// --- Lógica de cada ronda ---
-function siguienteRonda() {
-  if (ronda >= TOTAL_RONDAS) {
-    finalizar();
-    return;
-  }
-
-  letraActual = secuencia[ronda];
-  ronda++;
-  indicadorRonda.textContent = `Ronda ${ronda}/${TOTAL_RONDAS}`;
-  cronometro.textContent = `${(DURACION_RONDA_MS / 1000).toFixed(1)} s`;
-
-  letraEl.textContent = letraActual;
-
-  clicRegistrado = false;
-  zonaClic.classList.remove("flash-ok", "flash-err");
-
-  // Reinicia barra de tiempo
-  barraProgreso.style.animation = "none";
-  barraProgreso.offsetHeight;
-  barraProgreso.style.animation = `drain ${DURACION_RONDA_MS}ms linear forwards`;
-
-  requestAnimationFrame(() => {
-    inicioRonda = performance.now();
-
-    window.addEventListener("click", onClick, { once: true });
-
-    timeoutRonda = setTimeout(() => {
-      if (!clicRegistrado) {
-        window.removeEventListener("click", onClick);
-        registrarSinClic();
-      }
-    }, DURACION_RONDA_MS);
-  });
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+  color:var(--text);
+  background:radial-gradient(1200px 800px at 75% -50%, #e7f1ff 0%, transparent 60%) , var(--bg);
 }
 
-// --- Manejo del clic ---
-function onClick() {
-  if (clicRegistrado) return;
-  clicRegistrado = true;
-  const tiempo = performance.now() - inicioRonda;
-  clearTimeout(timeoutRonda);
-
-  resultados.push({
-    ronda,
-    letra: letraActual,
-    clicado: true,
-    tiempo: tiempo.toFixed(2),
-  });
-
-  mostrarEmoji(true);
-  flashResultado(true);
-  avanzarTrasBrevePausa();
+.wrap{
+  min-height:100%;
+  display:grid;
+  place-items:center;
+  padding:24px;
 }
 
-// --- Sin clic ---
-function registrarSinClic() {
-  resultados.push({
-    ronda,
-    letra: letraActual,
-    clicado: false,
-    tiempo: "Sin respuesta",
-  });
-
-  mostrarEmoji(false);
-  flashResultado(false);
-  avanzarTrasBrevePausa();
+.card{
+  width:min(950px, 92vw);
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:28px;
+  transition:transform .3s ease, opacity .3s ease;
 }
 
-// --- Mostrar emoji (sin timeout interno) ---
-function mostrarEmoji(ok) {
-  emojiFeedback.textContent = ok ? "✅" : "❌";
-  emojiFeedback.classList.add("show");
-  emojiFeedback.classList.remove("hidden");
+h1,h2{margin:0 0 10px}
+h1{font-size:clamp(28px, 4vw, 42px); letter-spacing:-.02em}
+h2{font-size:clamp(22px, 3vw, 30px); letter-spacing:-.01em}
+.sub{color:var(--muted); margin:8px 0 22px; line-height:1.5}
+
+.hidden{display:none !important}
+.fade-in{animation:fade .35s ease both}
+@keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+.btn{
+  appearance:none; border:0; cursor:pointer;
+  padding:12px 18px; border-radius:12px;
+  background:var(--primary-weak); color:var(--text); font-weight:600;
+  transition:transform .06s ease, background .2s ease, box-shadow .2s ease;
+}
+.btn:hover{background:#d9e7ff}
+.btn:active{transform:translateY(1px)}
+.btn-primary{
+  background:var(--primary); color:white; box-shadow:0 6px 18px rgba(43,124,255,.28);
+}
+.btn-primary:hover{filter:saturate(1.05) brightness(1.02)}
+.btn-primary:active{transform:translateY(1px)}
+
+.topbar{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;
+  margin-bottom:18px;
+}
+.pill{
+  background:var(--primary-weak);
+  color:var(--text);
+  padding:8px 12px; border-radius:999px; font-size:14px;
 }
 
-// --- Feedback visual ---
-function flashResultado(ok) {
-  zonaClic.classList.remove("flash-ok", "flash-err");
-  zonaClic.classList.add(ok ? "flash-ok" : "flash-err");
+.zona-clic{
+  position:relative;
+  display:grid; place-items:center;
+  border:1px solid #e9efff; border-radius:16px;
+  min-height:46vh;
+  background:
+    radial-gradient(800px 240px at 50% -120px, #f0f6ff 0%, transparent 65%),
+    linear-gradient(180deg, #ffffff, #fbfdff);
+  overflow:hidden;
 }
 
-// --- Pausa breve entre rondas (ahora aleatoria 1-2s) ---
-function avanzarTrasBrevePausa() {
-  const pausaAleatoria = aleatorioEntre(1000, 2000); // ms
-
-  // Mantiene emoji y letra juntos durante DURACION_RONDA_MS, luego desaparecen juntos
-  setTimeout(() => {
-    letraEl.textContent = "";
-    emojiFeedback.classList.remove("show");
-    emojiFeedback.classList.add("hidden");
-
-    // Chama próxima ronda após pausa aleatória
-    setTimeout(() => {
-      siguienteRonda();
-    }, pausaAleatoria);
-  }, DURACION_RONDA_MS);
+.letra{
+  font-size:min(24vw, 160px);
+  font-weight:800; letter-spacing:.06em;
+  text-shadow:0 4px 24px rgba(43,124,255,.18);
+  user-select:none;
 }
 
-// --- Finalización ---
-function finalizar() {
-  window.removeEventListener("click", onClick);
-  clearTimeout(timeoutRonda);
-  pantallaJuego.classList.add("hidden");
-  pantallaResultados.classList.remove("hidden");
-
-  cuerpoTabla.innerHTML = resultados
-    .map(
-      (res) => `
-    <tr>
-      <td>${res.ronda}</td>
-      <td>${res.letra}</td>
-      <td>${res.clicado ? "✅" : "❌"}</td>
-      <td>${res.tiempo}</td>
-    </tr>`
-    )
-    .join("");
-
-  const tiemposValidos = resultados
-    .filter((r) => r.tiempo !== "Sin respuesta")
-    .map((r) => parseFloat(r.tiempo))
-    .filter((t) => !isNaN(t));
-
-  if (tiemposValidos.length > 0) {
-    const media = (
-      tiemposValidos.reduce((a, b) => a + b, 0) / tiemposValidos.length
-    ).toFixed(2);
-    cuerpoTabla.innerHTML += `
-      <tr style="font-weight:bold; background:#eef;">
-        <td colspan="3">Media de tiempos</td>
-        <td>${media} ms</td>
-      </tr>
-    `;
-  }
+#emoji-feedback {
+  position:absolute;
+  font-size:64px;
+  opacity:0;
+  transition:opacity 0.3s ease;
+}
+#emoji-feedback.show {
+  opacity:1;
 }
 
-// --- Animación CSS para la barra ---
-const style = document.createElement("style");
-style.textContent = `
-@keyframes drain {
-  from { transform: scaleX(1); }
-  to   { transform: scaleX(0); }
-}`;
-document.head.appendChild(style);
+.barra-tiempo{
+  position:absolute; left:0; right:0; bottom:0;
+  height:8px; background:#eef5ff;
+}
+.barra-progreso{
+  height:100%; width:100%;
+  background:linear-gradient(90deg, #79a9ff, #2b7cff);
+  transform-origin:left center;
+  animation: none;
+}
+
+.flash-ok{
+  box-shadow: inset 0 0 0 2000vmax rgba(18,184,134,.10);
+  transition: box-shadow .2s ease;
+}
+.flash-err{
+  box-shadow: inset 0 0 0 2000vmax rgba(255,107,107,.12);
+  transition: box-shadow .2s ease;
+}
+
+.tabla-wrap{overflow:auto; margin-top:12px}
+.tabla{
+  width:100%; border-collapse:collapse;
+  border:1px solid #e9efff; border-radius:12px; overflow:hidden;
+}
+.tabla th, .tabla td{
+  padding:12px 10px; text-align:center; white-space:nowrap;
+  border-bottom:1px solid #eef3ff;
+}
+.tabla thead th{
+  background:#f2f7ff; font-weight:700;
+}
+.tabla tbody tr:hover{background:#fafcff}
+.tabla tfoot td{font-weight:700}
